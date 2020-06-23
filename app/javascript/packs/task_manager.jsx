@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import PropTypes from 'prop-types'
 
-const TasksManager = props => (
+const TaskManager = props => (
   <>
   	<section className="todoapp">
   		<header className="header">
@@ -59,10 +59,10 @@ const TasksManager = props => (
   </>
 )
 
-TasksManager.defaultProps = {
+TaskManager.defaultProps = {
 }
 
-TasksManager.propTypes = {
+TaskManager.propTypes = {
 }
 
-export default TasksManager
+export default TaskManager

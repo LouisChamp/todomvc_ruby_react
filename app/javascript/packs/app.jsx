@@ -1,10 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import PropTypes from 'prop-types'
-import TasksManager from './tasks_manager'
+import TaskManager from './task_manager'
 
 const App = props =>
-  <TasksManager />
+  <TaskManager />
 
 App.defaultProps = {
 }

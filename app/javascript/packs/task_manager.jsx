@@ -16,11 +16,11 @@ const TaskManager = props => (
   			<ul className="todo-list">
   				<li className="completed">
   					<div className="view">
-  						<input className="toggle" type="checkbox" checked />
+  						<input className="toggle" type="checkbox" checked onChange={() => {}} />
   						<label>Taste JavaScript</label>
   						<button className="destroy"></button>
   					</div>
-  					<input className="edit" value="Create a TodoMVC template" />
+  					<input className="edit" value="Create a TodoMVC template" onChange={() => {}} />
   				</li>
   				<li>
   					<div className="view">
@@ -28,7 +28,7 @@ const TaskManager = props => (
   						<label>Buy a unicorn</label>
   						<button className="destroy"></button>
   					</div>
-  					<input className="edit" value="Rule the web" />
+  					<input className="edit" value="Rule the web"  onChange={() => {}} />
   				</li>
   			</ul>
   		</section>

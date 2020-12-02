@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import PropTypes from 'prop-types'
-import TaskManager from './task_manager'
+import TaskManager from '../components/task_manager'
 
 const App = props =>
   <TaskManager />

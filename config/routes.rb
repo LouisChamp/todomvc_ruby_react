@@ -2,5 +2,8 @@
 Rails.application.routes.draw do
   get 'hello/world'
 
-  root to: 'spa#index'
+  root to: redirect('/spa')
+
+  # Catch all routes below `/spa`.
+  get '/spa(/*path)' => 'spa#index'
 end

@@ -1,9 +1,15 @@
 class Api::V1::TasksController < ApplicationController
+  skip_before_action :verify_authenticity_token
+
   def index
-    render json: Task.all
+    # sleep 5
+
+    render json: User.last.tasks
   end
 
-  def show
-    render json: Task.find(params[:id])
+  def destroy
+    task = Task.find(params[:id])
+
+    task.destroy
   end
 end

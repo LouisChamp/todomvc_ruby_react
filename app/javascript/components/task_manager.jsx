@@ -1,16 +1,33 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import PropTypes from 'prop-types'
 import classNames from 'classnames'
+import axios from 'axios'
 
 const TaskManager = props => {
-	const tasks = [
-		{ id: 1, title: 'Task A', completed: true },
-		{ id: 2, title: 'Task B', completed: false },
-		{ id: 3, title: 'Task C', completed: true },
-	]
+	const [tasks, setTasks] = useState([])
+
+	useEffect(() => {
+		axios.get('/api/v1/tasks')
+			.then(response => {
+				setTasks(response.data)
+			})
+			.catch(console.log)
+	}, [])
 
 	const pendingTasks = tasks.filter(task => !task.completed)
+
+	const handleTaskDestroy = task => event => {
+		if (confirm(`Are you sure you want to delete task '${task.title}'`)) {
+			axios.delete(`/api/v1/tasks/${task.id}`)
+				.then(response => {
+					setTasks(
+						tasks.filter(tsk => tsk.id !== task.id)
+					)
+				})
+				.catch(console.log)
+		}
+	}
 
 	return (
 		<>
@@ -29,7 +46,7 @@ const TaskManager = props => {
 								<div className="view">
 									<input className="toggle" type="checkbox" checked={task.completed} onChange={() => { }} />
 									<label>{task.title}</label>
-									<button className="destroy"></button>
+									<button className="destroy" onClick={handleTaskDestroy(task)}></button>
 								</div>
 								<input className="edit" value="Create a TodoMVC template" onChange={() => { }} />
 							</li>

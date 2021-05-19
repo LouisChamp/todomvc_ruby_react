@@ -3,7 +3,9 @@
 one:
   title: MyString
   completed: false
+  user: one
 
 two:
   title: MyString
   completed: false
+  user: two

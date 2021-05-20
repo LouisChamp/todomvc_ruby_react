@@ -18,7 +18,7 @@ const TaskManager = props => {
 	const pendingTasks = tasks.filter(task => !task.completed)
 
 	const handleTaskDestroy = task => event => {
-		if (confirm(`Are you sure you want to delete task '${task.title}'`)) {
+		if (confirm(`Are you sure you want to delete task '${task.title}'?`)) {
 			axios.delete(`/api/v1/tasks/${task.id}`)
 				.then(response => {
 					setTasks(

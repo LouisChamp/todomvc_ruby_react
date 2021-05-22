@@ -10,6 +10,7 @@ const TaskManager = props => {
 		const [tasks, setTasks] = useState([])
 		const [taskFilter, setTaskFilter] = useState('All')
 		const newTaskTilteRef = useRef(null)
+		// const taskClassRef = useRef({})
 
 		useEffect(() => {
 			axios.get('api/v1/tasks')
@@ -31,17 +32,15 @@ const TaskManager = props => {
 			}
 		}
 
-		const handleToggleCheck = task => event => {
-			const completed = !task.completed
+		const handleTaskStatusUpdate = task => event => {
+			const completed = event.target.checked
+
 			axios.put(`/api/v1/tasks/${task.id}`, { completed })
 			.then(response => {
 				setTasks(
-					previousTasks => previousTasks.map(tsk => { // PERGUNTAR AO CASSIANO MELHORES MANEIRAS DE GERAR ESTE ARRAY
-						if(tsk.id === task.id) {
-							tsk.completed = completed
-						}
-						return tsk
-					})
+					previousTasks => previousTasks.map(tsk => 
+						tsk.id === task.id ? {...tsk, completed} : tsk
+					)
 				)
 			})
 			.catch(console.log)
@@ -67,30 +66,25 @@ const TaskManager = props => {
 		}
 
 		const handleChangeFilter = filter => event => {
+			event.preventDefault()
 			setTaskFilter(filter)
 		}
 
 		const handleTaskEdit = task => event => {
-
+			// taskClassRef[task.id].current.className = classNames({completed: task.completed} , {editing: true})
 		}
 
-		const handleClearCompletedTasks = event => { // PERGUNTAR SOBRE CRIAR UM ENDPOINT QUE DELETE TODAS AS TAREFAS SIMULTANEAMENTE (FORA DO RESOURCES)
-			// LOGICA PROPOSTA: FILTER + REDUCER CRIA O ARRAY DE ID'S PARA DELETAR
-			// API LIDA COM ARRAY DE ID'S E RETORNA SUCESSO APENAS UMA VEZ
-
-			
-			// tasks.map(task => {
-			// 	if(task.completed === true) {
-			// 		axios.delete(`/api/v1/tasks/${task.id}`)
-			// 		.then(response => {
-			// 			setTasks(
-			// 				previousTasks => previousTasks.filter(tsk => tsk.id !== task.id)
-			// 			)
-			// 		})
-			// 		.catch(console.log)
-			// 		return task
-			// 	}
-			// })
+		const handleClearCompletedTasks = _event => { 
+			if (confirm('Are you sure you want to delete all completed tasks?')) {
+				const ids = tasksComplete.map(task => task.id)
+				
+				axios.post('/api/v1/tasks/destroy_completed', { ids })
+				.then(_response => {
+					setTasks(
+						tasksIncomplete
+					)
+				})
+			}
 		}
 
 		const _addTask = () => {
@@ -107,26 +101,25 @@ const TaskManager = props => {
 			}
 		}
 
-		const _filterTasks = () => {
-			const filtered = tasks
-			switch(taskFilter) {
-				case 'All':
-					return filtered
-				break
-				case 'Active':
-					return filtered.filter(task => !task.completed)
-				break
-				case 'Completed':
-					return filtered.filter(task => task.completed)
-				break
-				default:
-					return filtered
-			}
-		}
-
-		const tasksFiltered = _filterTasks()
 		const tasksIncomplete = tasks.filter(task => !task.completed)
+		const tasksComplete = tasks.filter(task => task.completed)
 
+		let tasksFiltered
+		
+		switch(taskFilter) {
+			case 'All':
+				tasksFiltered = tasks
+			break
+			case 'Active':
+				tasksFiltered = tasksIncomplete
+			break
+			case 'Completed':
+				tasksFiltered = tasksComplete
+			break
+			default:
+				throw `Unexpected value for tasksFiltered [${taskFilter}]`
+		}
+		
 
 	return (
   <>
@@ -152,9 +145,10 @@ const TaskManager = props => {
   				<li 
 					className={classNames({completed: task.completed} , {editing: false})} 
 					key={task.id} 
+					// ref={taskClassRef[task.id]}
 					>
   					<div className="view">
-  						<input className="toggle" type="checkbox" checked={task.completed} onChange={handleToggleCheck(task)} />
+  						<input className="toggle" type="checkbox" checked={task.completed} onChange={handleTaskStatusUpdate(task)} />
   						<label onDoubleClick={handleTaskEdit(task)}>{task.title}</label>
   						<button className="destroy" onClick={ handleTaskDestroy(task)}></button>
   					</div>
@@ -169,16 +163,18 @@ const TaskManager = props => {
   			<span className="todo-count"><strong>{tasksIncomplete.length}</strong> item{tasksIncomplete.length === 1 ? '' : 's'} left</span>
   			<ul className="filters">
   				<li>
-  					<a className={classNames({selected: taskFilter === 'All'})} onClick={ handleChangeFilter('All')}>All</a>
+  					<a className={classNames({selected: taskFilter === 'All'})} href='#' onClick={ handleChangeFilter('All')}>All</a>
   				</li>
   				<li>
-  					<a className={classNames({selected: taskFilter === 'Active'})} onClick={ handleChangeFilter('Active')}>Active</a>
+  					<a className={classNames({selected: taskFilter === 'Active'})} href='#' onClick={ handleChangeFilter('Active')}>Active</a>
   				</li>
   				<li>
-  					<a className={classNames({selected: taskFilter === 'Completed'})} onClick={ handleChangeFilter('Completed')}>Completed</a>
+  					<a className={classNames({selected: taskFilter === 'Completed'})} href='#' onClick={ handleChangeFilter('Completed')}>Completed</a>
   				</li>
   			</ul>
-  			<button className="clear-completed" onClick={handleClearCompletedTasks}>Clear completed</button>
+  			{ tasksComplete.length > 0 && 
+					<button className="clear-completed" onClick={handleClearCompletedTasks}>Clear completed</button>
+				}
   		</footer>
   	</section>
 

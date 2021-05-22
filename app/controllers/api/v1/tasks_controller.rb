@@ -1,6 +1,7 @@
 class Api::V1::TasksController < ApplicationController
   skip_before_action :verify_authenticity_token
-  before_action :set_logged_user
+  before_action :set_logged_user 
+  before_action :find_current_task, only: [:destroy, :update]
 
   def index
     # sleep 5
@@ -9,9 +10,14 @@ class Api::V1::TasksController < ApplicationController
   end
 
   def destroy
-    task = @logged_user.tasks.find(params[:id])
+    @task.destroy
+  end
 
-    task.destroy
+  def destroy_completed
+    
+    @logged_user.tasks.completed.where(id: params[:ids]).destroy_all
+
+    head :no_content
   end
 
   def create
@@ -30,16 +36,15 @@ class Api::V1::TasksController < ApplicationController
   end
 
   def update
-    task = @logged_user.tasks.find(params[:id])
-
-    if task.update(update_params)
-      render json: task, status: :ok
+    if @task.update(update_params)
+      render json: @task
     else
-      render json task.errors, status: :unprocessable_entity # 401
+      render json @task.errors, status: :unprocessable_entity # 401
     end
   end
 
   private 
+
   def create_params
     params.permit(:title)
   end
@@ -50,5 +55,9 @@ class Api::V1::TasksController < ApplicationController
 
   def set_logged_user
     @logged_user = User.last # Let's pretend the last user in the DB is the one logged in
+  end
+
+  def find_current_task
+    @task = @logged_user.tasks.find(params[:id])
   end
 end

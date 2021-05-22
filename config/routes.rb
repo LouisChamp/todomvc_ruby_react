@@ -5,7 +5,9 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      resources :tasks, only: %i[index destroy create update]
+      resources :tasks, only: %i[index destroy create update] do 
+        post :destroy_completed, on: :collection
+      end
     end
   end
 

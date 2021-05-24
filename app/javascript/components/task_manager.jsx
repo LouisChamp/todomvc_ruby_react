@@ -6,19 +6,26 @@ import classNames from "classnames";
 import axios from "axios";
 
 const TaskManager = (props) => {
+  // React Hooks
+
   const [tasks, setTasks] = useState([]);
   const [taskFilter, setTaskFilter] = useState("All");
   const newTaskTitleRef = useRef(null);
   const taskEditTitleInputs = useRef({});
 
   useEffect(() => {
+    const editing = false;
     axios
       .get("api/v1/tasks")
       .then((response) => {
-        setTasks(response.data);
+        setTasks(response.data.map((tsk) => ({ ...tsk, editing })));
       })
       .catch(console.log);
   }, []);
+
+  useEffect(() => {});
+
+  // Handling Methods
 
   const handleTaskDestroy = (task) => (event) => {
     if (confirm(`Are you sure you want to delete task ${task.title}`)) {
@@ -71,10 +78,13 @@ const TaskManager = (props) => {
     setTaskFilter(filter);
   };
 
-  const handleClickToEditTask = (task) => (event) => {
-    event.target.parentElement.parentElement.className = classNames(
-      { completed: task.completed },
-      { editing: true }
+  const handleClickToEditTask = (task) => (_event) => {
+    const editing = true;
+
+    setTasks((previousTasks) =>
+      previousTasks.map((tsk) =>
+        tsk.id === task.id ? { ...tsk, editing } : tsk
+      )
     );
     taskEditTitleInputs.current[task.id].focus();
   };
@@ -94,19 +104,19 @@ const TaskManager = (props) => {
       .catch(console.log);
   };
 
-  const handleFinishEditTask = (task) => (event) => {
-    _finishEditingTask(event, task);
+  const handleFinishEditingTask = (task) => (_event) => {
+    _finishEditingTask(task);
   };
 
-  const handleFinishEditTaskKeyDown = (task) => (event) => {
+  const handleFinishEditingTaskKeyDown = (task) => (event) => {
     const key = event.key;
 
     switch (key) {
       case "Enter":
-        _finishEditingTask(event, task);
+        _finishEditingTask(task);
         break;
       case "Escape":
-        _finishEditingTask(event, task);
+        _finishEditingTask(task);
         break;
       default:
     }
@@ -137,6 +147,8 @@ const TaskManager = (props) => {
       .catch(console.log);
   };
 
+  // Helper Methods
+
   const _addTask = () => {
     const title = newTaskTitleRef.current.value;
 
@@ -152,10 +164,13 @@ const TaskManager = (props) => {
     }
   };
 
-  const _finishEditingTask = (event, task) => {
-    event.target.parentElement.className = classNames(
-      { completed: task.completed },
-      { editing: false }
+  const _finishEditingTask = (task) => {
+    const editing = false;
+
+    setTasks((previousTasks) =>
+      previousTasks.map((tsk) =>
+        tsk.id === task.id ? { ...tsk, editing } : tsk
+      )
     );
   };
 
@@ -206,7 +221,7 @@ const TaskManager = (props) => {
               <li
                 className={classNames(
                   { completed: task.completed },
-                  { editing: false }
+                  { editing: task.editing }
                 )}
                 key={task.id}
               >
@@ -229,8 +244,8 @@ const TaskManager = (props) => {
                   className="edit"
                   value={task.title}
                   onChange={handleEditTask(task)}
-                  onBlur={handleFinishEditTask(task)}
-                  onKeyDown={handleFinishEditTaskKeyDown(task)}
+                  onBlur={handleFinishEditingTask(task)}
+                  onKeyDown={handleFinishEditingTaskKeyDown(task)}
                   ref={(el) => {
                     taskEditTitleInputs.current[task.id] = el;
                   }}

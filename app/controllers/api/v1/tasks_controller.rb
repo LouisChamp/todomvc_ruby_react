@@ -43,6 +43,13 @@ class Api::V1::TasksController < ApplicationController
     end
   end
 
+  def batch_update_completed
+
+    @logged_user.tasks.update_all(completed: params[:completed])
+      
+    head :no_content
+  end
+
   private 
 
   def create_params
@@ -50,7 +57,7 @@ class Api::V1::TasksController < ApplicationController
   end
 
   def update_params
-    params.permit(:completed)
+    params.permit(:completed, :title)
   end
 
   def set_logged_user

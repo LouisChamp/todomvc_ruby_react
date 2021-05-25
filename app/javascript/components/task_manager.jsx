@@ -13,6 +13,7 @@ const TaskManager = props => {
   const newTaskTitleRef = useRef(null);
   const taskEditTitleInputs = useRef({});
   const [editingTaskId, setEditingTaskId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     axios
@@ -125,6 +126,8 @@ const TaskManager = props => {
     const title = taskEditTitleInputs.current[task.id].value;
 
     if (title !== "" && title !== task.title) {
+      setLoading(true);
+
       axios
         .put(`/api/v1/tasks/${task.id}`, { title })
         .then(response => {
@@ -134,8 +137,9 @@ const TaskManager = props => {
 
           setEditingTaskId(null);
         })
-        .catch(err => {
-          console.log(err);
+        .catch(console.log)
+        .finally(() => {
+          setLoading(false);
         });
     } else {
       setEditingTaskId(null);
@@ -154,12 +158,19 @@ const TaskManager = props => {
 
   const handleTaskBundleUpdate = event => {
     const completed = event.target.checked;
+    const ids = (completed ? pendingTasks : completedTasks).map(
+      task => task.id
+    );
 
     axios
-      .post("/api/v1/tasks/batch_update_completed", { completed })
+      .put("/api/v1/tasks/batch_update_completed", { ids, completed })
       .then(_response => {
         setTasks(previousTasks =>
-          previousTasks.map(tsk => ({ ...tsk, completed }))
+          previousTasks.map(task =>
+            ids.includes(task.id)
+              ? { ...task, completed: !task.completed }
+              : task
+          )
         );
       })
       .catch(console.log);
@@ -296,6 +307,8 @@ const TaskManager = props => {
           )}
         </footer>
       </section>
+
+      {loading && <p>Loading...</p>}
 
       <footer className="info">
         <p>Double-click to edit a todo</p>

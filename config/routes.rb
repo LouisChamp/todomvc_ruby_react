@@ -7,7 +7,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       resources :tasks, only: %i[index destroy create update] do 
         post :destroy_completed, on: :collection
-        post :batch_update_completed, on: :collection # PUT WOULD BE BETTER? CASSIANO PERGUNTAR
+        put :batch_update_completed, on: :collection 
       end
     end
   end

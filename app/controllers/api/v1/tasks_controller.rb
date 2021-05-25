@@ -4,8 +4,6 @@ class Api::V1::TasksController < ApplicationController
   before_action :find_current_task, only: [:destroy, :update]
 
   def index
-    # sleep 5
-
     render json: @logged_user.tasks
   end
 
@@ -36,6 +34,8 @@ class Api::V1::TasksController < ApplicationController
   end
 
   def update
+    sleep 5
+
     if @task.update(update_params)
       render json: @task
     else
@@ -44,9 +44,16 @@ class Api::V1::TasksController < ApplicationController
   end
 
   def batch_update_completed
+    completed = params[:completed]
 
-    @logged_user.tasks.update_all(completed: params[:completed])
-      
+    scope_method = completed ? :pending : :completed
+
+    @logged_user
+      .tasks
+      .send(scope_method)
+      .where(id: params[:ids])
+      .update_all(completed: completed)
+
     head :no_content
   end
 

@@ -5,56 +5,50 @@ import className from "classnames";
 import classNames from "classnames";
 import axios from "axios";
 
-const TaskManager = (props) => {
+const TaskManager = props => {
   // React Hooks
 
   const [tasks, setTasks] = useState([]);
   const [taskFilter, setTaskFilter] = useState("All");
   const newTaskTitleRef = useRef(null);
-  // NEW HOOKS 5-24-2021++
   const taskEditTitleInputs = useRef({});
   const [editingTaskId, setEditingTaskId] = useState(null);
-  // END NEW
 
   useEffect(() => {
     axios
       .get("api/v1/tasks")
-      .then((response) => {
+      .then(response => {
         setTasks(response.data);
       })
       .catch(console.log);
   }, []);
 
-  // NEW USE EFFECT 5-24-2021
-  useEffect(() => {
-    if (editingTaskId !== null)
-      taskEditTitleInputs.current[editingTaskId].focus();
-  });
-  // END NEW
+  const pendingTasks = tasks.filter(task => !task.completed);
+  const completedTasks = tasks.filter(task => task.completed);
 
   // Handling Methods
 
-  const handleTaskDestroy = (task) => (event) => {
+  const handleTaskDestroy = task => event => {
     if (confirm(`Are you sure you want to delete task ${task.title}`)) {
       axios
         .delete(`/api/v1/tasks/${task.id}`)
-        .then((_response) => {
-          setTasks((previousTasks) =>
-            previousTasks.filter((tsk) => tsk.id !== task.id)
+        .then(_response => {
+          setTasks(previousTasks =>
+            previousTasks.filter(tsk => tsk.id !== task.id)
           );
         })
         .catch(console.log);
     }
   };
 
-  const handleTaskStatusUpdate = (task) => (event) => {
+  const handleTaskStatusUpdate = task => event => {
     const completed = event.target.checked;
 
     axios
       .put(`/api/v1/tasks/${task.id}`, { completed })
-      .then((_response) => {
-        setTasks((previousTasks) =>
-          previousTasks.map((tsk) =>
+      .then(_response => {
+        setTasks(previousTasks =>
+          previousTasks.map(tsk =>
             tsk.id === task.id ? { ...tsk, completed } : tsk
           )
         );
@@ -62,7 +56,7 @@ const TaskManager = (props) => {
       .catch(console.log);
   };
 
-  const handleNewTaskKeyDown = (event) => {
+  const handleNewTaskKeyDown = event => {
     const key = event.key;
 
     switch (key) {
@@ -76,80 +70,9 @@ const TaskManager = (props) => {
     }
   };
 
-  const handleNewTaskBlur = (event) => {
+  const handleNewTaskBlur = event => {
     _addTask();
   };
-
-  const handleChangeFilter = (filter) => (event) => {
-    event.preventDefault();
-    setTaskFilter(filter);
-  };
-
-  // NEW FUNCTIONS ADDED FOR 5-24-2021 MEETING
-  const handleClickToEditTask = (task) => (_event) => {
-    setEditingTaskId(task.id);
-  };
-
-  const handleEditTask = (task) => (event) => {
-    const title = event.target.value;
-
-    axios
-      .put(`/api/v1/tasks/${task.id}`, { title })
-      .then((_response) => {
-        setTasks((previousTasks) =>
-          previousTasks.map(
-            (tsk) => (tsk.id === task.id ? { ...tsk, title } : tsk) // response.data
-          )
-        );
-      })
-      .catch(console.log);
-  };
-
-  const handleFinishEditingTask = (task) => (_event) => {
-    setEditingTaskId(null);
-  };
-
-  const handleFinishEditingTaskKeyDown = (task) => (event) => {
-    const key = event.key;
-
-    switch (key) {
-      case "Enter":
-        setEditingTaskId(null);
-        break;
-      case "Escape":
-        setEditingTaskId(null);
-        break;
-      default:
-    }
-  };
-  // END NEW FUNCTIONS ADDED
-
-  const handleClearCompletedTasks = (_event) => {
-    if (confirm("Are you sure you want to delete all completed tasks?")) {
-      const ids = completedTasks.map((task) => task.id);
-
-      axios
-        .post("/api/v1/tasks/destroy_completed", { ids })
-        .then((_response) => {
-          setTasks(pendingTasks);
-        });
-    }
-  };
-
-  const handleTaskBundleUpdate = (event) => {
-    const completed = event.target.checked;
-
-    axios
-      .post("/api/v1/tasks/batch_update_completed", { completed })
-      .then((_response) => {
-        setTasks((previousTasks) =>
-          previousTasks.map((tsk) => ({ ...tsk, completed }))
-        );
-      })
-      .catch(console.log);
-  };
-
-  // Helper Methods
 
   const _addTask = () => {
     const title = newTaskTitleRef.current.value;
@@ -157,8 +80,8 @@ const TaskManager = (props) => {
     if (title !== "") {
       axios
         .post("/api/v1/tasks", { title })
-        .then((response) => {
-          setTasks((previousTasks) => previousTasks.concat(response.data)); // Perguntar: nao estamos mudando o array tasks diretamente aqui?
+        .then(response => {
+          setTasks(previousTasks => previousTasks.concat(response.data));
 
           newTaskTitleRef.current.value = "";
         })
@@ -166,8 +89,81 @@ const TaskManager = (props) => {
     }
   };
 
-  const pendingTasks = tasks.filter((task) => !task.completed);
-  const completedTasks = tasks.filter((task) => task.completed);
+  const handleChangeFilter = filter => event => {
+    event.preventDefault();
+    setTaskFilter(filter);
+  };
+
+  const handleClickToEditTask = task => _event => {
+    setEditingTaskId(task.id);
+
+    setTimeout(() => {
+      taskEditTitleInputs.current[task.id].focus();
+    }, 0);
+  };
+
+  const handleFinishEditingTaskBlur = task => _event => {
+    _editTask(task);
+  };
+
+  const handleFinishEditingTaskKeyDown = task => event => {
+    const key = event.key;
+    const taskTitleInput = taskEditTitleInputs.current[task.id];
+
+    switch (key) {
+      case "Enter":
+        taskTitleInput.blur();
+        break;
+      case "Escape":
+        taskTitleInput.value = task.title;
+        break;
+      default:
+    }
+  };
+
+  const _editTask = task => {
+    const title = taskEditTitleInputs.current[task.id].value;
+
+    if (title !== "" && title !== task.title) {
+      axios
+        .put(`/api/v1/tasks/${task.id}`, { title })
+        .then(response => {
+          setTasks(previousTasks =>
+            previousTasks.map(tsk => (task.id === tsk.id ? response.data : tsk))
+          );
+
+          setEditingTaskId(null);
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    } else {
+      setEditingTaskId(null);
+    }
+  };
+
+  const handleClearCompletedTasks = _event => {
+    if (confirm("Are you sure you want to delete all completed tasks?")) {
+      const ids = completedTasks.map(task => task.id);
+
+      axios.post("/api/v1/tasks/destroy_completed", { ids }).then(_response => {
+        setTasks(pendingTasks);
+      });
+    }
+  };
+
+  const handleTaskBundleUpdate = event => {
+    const completed = event.target.checked;
+
+    axios
+      .post("/api/v1/tasks/batch_update_completed", { completed })
+      .then(_response => {
+        setTasks(previousTasks =>
+          previousTasks.map(tsk => ({ ...tsk, completed }))
+        );
+      })
+      .catch(console.log);
+  };
 
   let tasksFiltered;
 
@@ -209,7 +205,7 @@ const TaskManager = (props) => {
           />
           <label htmlFor="toggle-all">Mark all as complete</label>
           <ul className="todo-list">
-            {tasksFiltered.map((task) => (
+            {tasksFiltered.map(task => (
               <li
                 className={classNames(
                   { completed: task.completed },
@@ -234,11 +230,10 @@ const TaskManager = (props) => {
                 </div>
                 <input
                   className="edit"
-                  value={task.title}
-                  onChange={handleEditTask(task)}
-                  onBlur={handleFinishEditingTask(task)}
+                  defaultValue={task.title}
+                  onBlur={handleFinishEditingTaskBlur(task)}
                   onKeyDown={handleFinishEditingTaskKeyDown(task)}
-                  ref={(el) => {
+                  ref={el => {
                     taskEditTitleInputs.current[task.id] = el;
                   }}
                 />

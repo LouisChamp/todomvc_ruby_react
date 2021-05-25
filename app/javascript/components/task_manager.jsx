@@ -11,19 +11,26 @@ const TaskManager = (props) => {
   const [tasks, setTasks] = useState([]);
   const [taskFilter, setTaskFilter] = useState("All");
   const newTaskTitleRef = useRef(null);
+  // NEW HOOKS 5-24-2021++
   const taskEditTitleInputs = useRef({});
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  // END NEW
 
   useEffect(() => {
-    const editing = false;
     axios
       .get("api/v1/tasks")
       .then((response) => {
-        setTasks(response.data.map((tsk) => ({ ...tsk, editing })));
+        setTasks(response.data);
       })
       .catch(console.log);
   }, []);
 
-  useEffect(() => {});
+  // NEW USE EFFECT 5-24-2021
+  useEffect(() => {
+    if (editingTaskId !== null)
+      taskEditTitleInputs.current[editingTaskId].focus();
+  });
+  // END NEW
 
   // Handling Methods
 
@@ -78,15 +85,9 @@ const TaskManager = (props) => {
     setTaskFilter(filter);
   };
 
+  // NEW FUNCTIONS ADDED FOR 5-24-2021 MEETING
   const handleClickToEditTask = (task) => (_event) => {
-    const editing = true;
-
-    setTasks((previousTasks) =>
-      previousTasks.map((tsk) =>
-        tsk.id === task.id ? { ...tsk, editing } : tsk
-      )
-    );
-    taskEditTitleInputs.current[task.id].focus();
+    setEditingTaskId(task.id);
   };
 
   const handleEditTask = (task) => (event) => {
@@ -96,8 +97,8 @@ const TaskManager = (props) => {
       .put(`/api/v1/tasks/${task.id}`, { title })
       .then((_response) => {
         setTasks((previousTasks) =>
-          previousTasks.map((tsk) =>
-            tsk.id === task.id ? { ...tsk, title } : tsk
+          previousTasks.map(
+            (tsk) => (tsk.id === task.id ? { ...tsk, title } : tsk) // response.data
           )
         );
       })
@@ -105,7 +106,7 @@ const TaskManager = (props) => {
   };
 
   const handleFinishEditingTask = (task) => (_event) => {
-    _finishEditingTask(task);
+    setEditingTaskId(null);
   };
 
   const handleFinishEditingTaskKeyDown = (task) => (event) => {
@@ -113,14 +114,15 @@ const TaskManager = (props) => {
 
     switch (key) {
       case "Enter":
-        _finishEditingTask(task);
+        setEditingTaskId(null);
         break;
       case "Escape":
-        _finishEditingTask(task);
+        setEditingTaskId(null);
         break;
       default:
     }
   };
+  // END NEW FUNCTIONS ADDED
 
   const handleClearCompletedTasks = (_event) => {
     if (confirm("Are you sure you want to delete all completed tasks?")) {
@@ -156,22 +158,12 @@ const TaskManager = (props) => {
       axios
         .post("/api/v1/tasks", { title })
         .then((response) => {
-          setTasks((previousTasks) => previousTasks.concat(response.data));
+          setTasks((previousTasks) => previousTasks.concat(response.data)); // Perguntar: nao estamos mudando o array tasks diretamente aqui?
 
           newTaskTitleRef.current.value = "";
         })
         .catch(console.log);
     }
-  };
-
-  const _finishEditingTask = (task) => {
-    const editing = false;
-
-    setTasks((previousTasks) =>
-      previousTasks.map((tsk) =>
-        tsk.id === task.id ? { ...tsk, editing } : tsk
-      )
-    );
   };
 
   const pendingTasks = tasks.filter((task) => !task.completed);
@@ -221,7 +213,7 @@ const TaskManager = (props) => {
               <li
                 className={classNames(
                   { completed: task.completed },
-                  { editing: task.editing }
+                  { editing: task.id === editingTaskId }
                 )}
                 key={task.id}
               >

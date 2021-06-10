@@ -19,7 +19,7 @@ const TaskManager = props => {
 
   useEffect(() => {
     axios
-      .get("api/v1/tasks")
+      .get(`${API_BASE_URL}/api/v1/tasks`)
       .then(response => {
         setTasks(response.data)
       })
